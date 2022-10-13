@@ -1,7 +1,10 @@
 require_relative 'board'
 require 'pry-byebug'
+require 'yaml'
 
 class Game < Board
+  attr_accessor :user_1, :user_2, :board, :turn, :game_over
+  
   def initialize(user_1, user_2)
     @user_1 = user_1
     @user_2 = user_2
@@ -52,9 +55,9 @@ class Game < Board
 
   def user_turn
     if @turn == 'white'
-      puts "it's #{@user_1.name}'s turn" 
+      puts " It's #{@user_1.name}'s turn \n Enter 'save' at any point to save the game" 
     else
-      puts "it's #{@user_2.name}'s turn"
+      puts " It's #{@user_2.name}'s turn \n Enter 'save' at any point to save the game"
     end
 
     user_move
@@ -96,6 +99,7 @@ class Game < Board
   end
 
   def correct_format(input)
+    save_game if input == 'SAVE'
     until input.match?(/[A-H][1-8][A-H][1-8]/) && input.length == 4
       puts "That input is not on the board, try again. e.g \"A2A3\""
       input = gets.chomp.upcase
@@ -148,7 +152,6 @@ class Game < Board
   end
 
   def check_en_passant_attack(move)
-    binding.pry
     if @turn == 'black'
       if move[1] > move[3]
         @board.board[move[0]][move[1] - 1].piece = nil
@@ -234,5 +237,23 @@ class Game < Board
       row.each {|node| arr << node.piece if node.piece != nil && node.piece.colour == 'white'}
     end
     arr
+  end
+
+  def save_game
+    Dir.mkdir('saves') unless Dir.exist?('saves')
+
+    puts "What would you like to call your saved game?"
+    save_name = "saves/#{gets.chomp}.yaml"
+
+    File.open(save_name, 'w') do |file|
+        file.puts YAML.dump ({
+          :user_1 => @user_1,
+          :user_2 => @user_2,
+          :board => @board,
+          :turn => @turn,
+          :game_over => @game_over
+        })
+    end
+    exit
   end
 end
